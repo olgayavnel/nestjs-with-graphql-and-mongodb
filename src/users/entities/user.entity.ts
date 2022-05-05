@@ -1,25 +1,29 @@
-import { ObjectType, Field, Int } from '@nestjs/graphql';
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { ObjectType, Field } from '@nestjs/graphql';
+import { Schema as MongooseSchema } from 'mongoose';
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 
-@Entity()
+// bind both GraphQL types and the mongoose types
+@Schema()
 @ObjectType()
 export class User {
-  @PrimaryGeneratedColumn('uuid')
-  @Field(() => String, { description: 'id of the user' })
-  userId: string;
-  @Column('int')
-  @Field(() => Int, { description: 'Example field (placeholder)' })
-  exampleField: number;
-  @Column()
-  @Field(() => String, { description: 'first name of the user' })
+  @Field(() => String)
+  _id: MongooseSchema.Types.ObjectId;
+
+  @Prop()
+  @Field(() => String, { description: 'User firstName ' })
   firstName: string;
-  @Column()
-  @Field(() => String, { description: 'last name of the user' })
+
+  @Prop()
+  @Field(() => String, { description: 'User lastName ' })
   lastName: string;
-  @Column()
-  @Field(() => String, { description: 'email of the user' })
+
+  @Prop()
+  @Field(() => String, { description: 'User email ' })
   email: string;
-  @Column({ nullable: true })
-  @Field(() => String, { description: 'role of the user' })
+
+  @Prop()
+  @Field(() => String, { description: 'User role' })
   role: string;
 }
+
+export const UserSchema = SchemaFactory.createForClass(User);

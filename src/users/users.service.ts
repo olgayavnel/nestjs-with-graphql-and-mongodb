@@ -2,57 +2,47 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateUserInput } from './dto/create-user.input';
 import { UpdateUserInput } from './dto/update-user.input';
 import { User } from './entities/user.entity';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 
 @Injectable()
 export class UsersService {
   constructor(
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
+    @InjectModel(User.name)
+    private readonly userModel: Model<User>,
   ) {}
 
-  async create(createUserInput: CreateUserInput): Promise<User> {
-    const user = this.userRepository.create(createUserInput);
-    return await this.userRepository.save(user);
+  create(createUserInput: CreateUserInput) {
+    const user = new this.userModel(createUserInput);
+    return user.save();
   }
 
-  async findAll(): Promise<Array<User>> {
-    return await this.userRepository.find();
+  findAll() {
+    return this.userModel.find().exec();
   }
 
-  async findOne(userId: string): Promise<User> {
-    const user = await this.userRepository.findOne(userId);
+  async findOne(id: string) {
+    const user = await this.userModel.findOne({ _id: id }).exec();
     if (!user) {
-      throw new NotFoundException(`User #${userId} not found`);
+      throw new NotFoundException(`User ${id} not found`);
     }
     return user;
   }
 
-  async update(
-    userId: string,
-    updateUserInput: UpdateUserInput,
-  ): Promise<User> {
-    const user = await this.userRepository.preload({
-      userId: userId,
-      ...updateUserInput,
-    });
-    if (!user) {
-      throw new NotFoundException(`User #${userId} not found`);
+  // !here is the setter
+  async update(id: string, updateUserInput: UpdateUserInput) {
+    const existingUser = await this.userModel
+      .findOneAndUpdate({ _id: id }, { $set: updateUserInput }, { new: true })
+      .exec();
+
+    if (!existingUser) {
+      throw new NotFoundException(`User ${id} not found`);
     }
-    return this.userRepository.save(user);
+    return existingUser;
   }
 
-  async remove(userId: string): Promise<User> {
-    const user = await this.findOne(userId);
-    await this.userRepository.remove(user);
-    return {
-      userId: userId,
-      firstName: '',
-      lastName: '',
-      email: '',
-      role: '',
-      exampleField: 0,
-    };
+  async remove(id: string) {
+    const user = await this.findOne(id);
+    return user.remove();
   }
 }
