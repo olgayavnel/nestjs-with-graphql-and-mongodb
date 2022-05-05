@@ -26,9 +26,72 @@ type User {
   role: String!
 }
 
+type PageDataDto {
+  count: Float!
+  limit: Float!
+  offset: Float!
+}
+
+type ListUsersResponse {
+  page: UserConnection!
+  pageData: PageDataDto
+}
+
+type UserConnection {
+  edges: [UserEdge!]
+  pageInfo: UserPageInfo
+}
+
+type UserEdge {
+  cursor: String
+  node: User
+}
+
+type UserPageInfo {
+  startCursor: String
+  endCursor: String
+  hasPreviousPage: Boolean!
+  hasNextPage: Boolean!
+}
+
 type Query {
-  users: [User!]!
+  users(listUsersInput: ListUsersInput!): [User!]!
+  listUsersWithCursor(args: ConnectionArgs!): ListUsersResponse!
   user(_id: String!): User!
+}
+
+input ListUsersInput {
+  """
+  classical limit
+  """
+  limit: Float!
+
+  """
+  classical offset
+  """
+  offset: Float!
+}
+
+input ConnectionArgs {
+  """
+  Paginate before opaque cursor
+  """
+  before: String
+
+  """
+  Paginate after opaque cursor
+  """
+  after: String
+
+  """
+  Paginate first
+  """
+  first: Float
+
+  """
+  Paginate last
+  """
+  last: Float
 }
 
 type Mutation {
